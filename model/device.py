@@ -8,6 +8,7 @@ import json
 
 # TODO: Controle do device via mqqt, na autalização
 client = mqtt.Client('central')
+client.loop_start()
 client.connect('192.168.10.101', port=1883, keepalive=60)
 
 class Device(object):
@@ -51,14 +52,10 @@ class Device(object):
     def turn_on(self, id, switch_on):
         _dev = self.db.query('select description from Devices where id=(?)', id)
         
-        
         if not _dev:
             raise ValueError
             
         topic = _dev[0]['description'] + '/relay'
-        
-        print topic + '/' + switch_on
-        
         
         client.subscribe(topic)
         client.publish(topic, switch_on)
