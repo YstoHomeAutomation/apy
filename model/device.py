@@ -3,7 +3,12 @@
 
 from datetime import datetime
 from rebel import Database, SqliteDriver
+import paho.mqtt.client as mqtt
 import json
+
+# TODO: Controle do device via mqqt, na autalização
+client = mqtt.Client('central')
+client.connect('192.168.10.101', port=1883, keepalive=60)
 
 class Device(object):
     def __init__(self, db):
@@ -40,6 +45,31 @@ class Device(object):
                 updated_at = (?)
             where id = :id
         """, description, switch_on, on_line, datetime.now().strftime('%Y-%m%d %H:%M:%S'), id)
+        
+        return self.get(id)
+        
+    def turn_on(self, id, switch_on):
+        _dev = self.db.query('select description from Devices where id=(?)', id)
+        
+        
+        if not _dev:
+            raise ValueError
+            
+        topic = _dev[0]['description'] + '/relay'
+        
+        print topic + '/' + switch_on
+        
+        
+        client.subscribe(topic)
+        client.publish(topic, switch_on)
+        client.unsubscribe(topic)
+    
+        _dev = self.db.execute("""
+            update Devices
+            set switch_on = :switch_on,
+                updated_at = (?)
+            where id = :id
+        """, switch_on, datetime.now().strftime('%Y-%m%d %H:%M:%S'), id)
         
         return self.get(id)
         
