@@ -57,3 +57,19 @@ class User(object):
             raise ValueError
         
         return data
+        
+    def login(self, email, password):
+        password = hashlib.md5(password).hexdigest()
+        id = self.db.query('select id from Users where email= :email and password= :password', email, password)
+        
+        return id
+        
+    def validation(self, auth, auth_value):
+        id = auth['id'][0]['id']
+        
+        if id:
+            user = self.db.query('select * from Users where id = (?)', id)
+    
+        if user: return True
+        
+        return False
